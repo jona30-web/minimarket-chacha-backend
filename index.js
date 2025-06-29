@@ -1,180 +1,185 @@
-// Importar las librerías necesarias
+// index.js (Backend)
+
+// 1. Importar las librerías necesarias
 const express = require('express');
-const cors = require('cors'); // Para permitir peticiones desde tu frontend
-const bodyParser = require('body-parser'); // Para parsear el cuerpo de las peticiones JSON
+const cors = require('cors');
+const bodyParser = require('body-parser'); // Para procesar el cuerpo de las peticiones JSON
 
-// Inicializar la aplicación Express
+// 2. Inicializar la aplicación Express
 const app = express();
-const port = 3000; // El puerto en el que correrá tu servidor
+const port = process.env.PORT || 3000; // Usa el puerto de Render o el 3000
 
-// --- Configuración de Middlewares ---
-
-// Usar CORS: Permite que tu frontend (que está en un dominio diferente, el de Replit para tu frontend)
-// pueda hacer peticiones a este backend.
+// 3. Configuración de Middlewares
+// CORS: Permite que tu frontend (desde cualquier origen) haga peticiones a tu backend
 app.use(cors());
-
-// Usar body-parser para parsear el cuerpo de las pet peticiones como JSON
+// Body Parser: Para parsear el cuerpo de las peticiones JSON
 app.use(bodyParser.json());
 
-// --- Base de Datos en Memoria (para el ejemplo) ---
-// En un proyecto real, esto sería una base de datos como MongoDB, PostgreSQL, MySQL, etc.
-// Usamos un array simple para almacenar los productos.
+// 4. Base de Datos en Memoria (para simular el almacenamiento de datos)
+//    ¡Estos arreglos se reinician si el servidor se reinicia!
+
 let productos = [
-    { id: 'prod001', codigo: 'ABC001', nombre: 'Azúcar (1kg)', categoria: 'Abarrotes', stock: 50, precio: 1.25 },
-    { id: 'prod002', codigo: 'ABC002', nombre: 'Aceite Vegetal (1L)', categoria: 'Abarrotes', stock: 30, precio: 3.50 },
-    { id: 'prod003', codigo: 'XYZ003', nombre: 'Leche Entera (1L)', categoria: 'Lácteos', stock: 20, precio: 1.10 },
-    { id: 'prod004', codigo: 'PQR004', nombre: 'Pan de Molde', categoria: 'Panadería', stock: 5, precio: 2.00 }, // Ejemplo de stock bajo
-    { id: 'prod005', codigo: 'QWE005', nombre: 'Gaseosa Coca-Cola (2.5L)', categoria: 'Bebidas', stock: 0, precio: 2.75 }, // Ejemplo sin stock
-    { id: 'prod006', codigo: 'MNB006', nombre: 'Galletas Chispas (paq)', categoria: 'Snacks', stock: 40, precio: 1.70 },
-    { id: 'prod007', codigo: 'JKL007', nombre: 'Jugo de Naranja (1L)', categoria: 'Bebidas', stock: 25, precio: 2.15 },
-    { id: 'prod008', codigo: 'FGH008', nombre: 'Arroz (5kg)', categoria: 'Abarrotes', stock: 15, precio: 6.00 }
+    { id: 'prod001', nombre: 'Azucar (1kg)', categoria: 'Abarrotes', stock: 20, precio: 1.25 },
+    { id: 'prod002', nombre: 'Sal (1kg)', categoria: 'Abarrotes', stock: 15, precio: 0.80 },
+    { id: 'prod003', nombre: 'Pan de Molde', categoria: 'Panadería', stock: 10, precio: 2.50 },
+    { id: 'prod004', nombre: 'Gaseosa Coca-Cola (2.5L)', categoria: 'Bebidas', stock: 30, precio: 2.75 },
+    { id: 'prod005', nombre: 'Galletas Oreo', categoria: 'Snacks', stock: 25, precio: 1.70 },
+    { id: 'prod006', nombre: 'Jugo de Naranja (1L)', categoria: 'Bebidas', stock: 18, precio: 2.00 },
+    { id: 'prod007', nombre: 'Leche (1L)', categoria: 'Lácteos', stock: 12, precio: 1.10 },
+    { id: 'prod008', nombre: 'Arroz (5kg)', categoria: 'Abarrotes', stock: 15, precio: 6.00 }
 ];
 
-// Función para generar un ID único simple (para productos nuevos)
-const generateId = () => {
-    return 'prod' + Date.now().toString(36) + Math.random().toString(36).substring(2, 5);
-};
+let clientes = [
+    { id: 'cli001', nombre: 'Juan Pérez', email: 'juan.perez@example.com', telefono: '0987654321' },
+    { id: 'cli002', nombre: 'Ana Gómez', email: 'ana.gomez@example.com', telefono: '0912345678' }
+];
 
-// --- Rutas de la API (Endpoints) ---
+let ventas = [
+    { id: 'vent001', fecha: '2025-06-28', clienteId: 'cli001', productos: [{ prodId: 'prod001', cantidad: 2 }], total: 2.50 },
+    { id: 'vent002', fecha: '2025-06-28', clienteId: 'cli002', productos: [{ prodId: 'prod004', cantidad: 1 }, { prodId: 'prod005', cantidad: 3 }], total: 7.85 }
+];
 
-// 1. GET /api/productos - Obtener todos los productos
+// 5. Función auxiliar para generar un ID único simple
+function generateId() {
+    return Math.random().toString(36).substring(2, 9);
+}
+
+// 6. Rutas de la API (Endpoints)
+
+// --- Endpoints de Productos ---
+
+// GET /api/productos - Obtener todos los productos
 app.get('/api/productos', (req, res) => {
-    console.log('GET /api/productos - Solicitud recibida');
-    // Simular un pequeño retraso para emular una API real (opcional)
-    setTimeout(() => {
-        res.status(200).json({
-            message: 'success',
-            data: productos
-        });
-    }, 500); // Retraso de 500ms
+    console.log('GET /api/productos - Solicitud de productos');
+    res.json(productos);
 });
 
-// 2. GET /api/productos/:id - Obtener un producto por ID
+// GET /api/productos/:id - Obtener un producto por ID
 app.get('/api/productos/:id', (req, res) => {
-    const { id } = req.params;
-    console.log(`GET /api/productos/${id} - Solicitud recibida`);
+    const id = req.params.id;
     const producto = productos.find(p => p.id === id);
-
     if (producto) {
-        res.status(200).json({
-            message: 'success',
-            data: producto
-        });
+        res.json(producto);
     } else {
-        res.status(404).json({
-            message: 'error',
-            error: 'Producto no encontrado'
-        });
+        res.status(404).json({ message: 'Producto no encontrado' });
     }
 });
 
-// 3. POST /api/productos - Agregar un nuevo producto
+// POST /api/productos - Agregar un nuevo producto
 app.post('/api/productos', (req, res) => {
     const nuevoProducto = req.body;
-    console.log('POST /api/productos - Solicitud recibida con datos:', nuevoProducto);
-
-    // Validaciones básicas
-    if (!nuevoProducto.codigo || !nuevoProducto.nombre || !nuevoProducto.stock || !nuevoProducto.precio) {
-        return res.status(400).json({
-            message: 'error',
-            error: 'Faltan campos obligatorios (codigo, nombre, stock, precio).'
-        });
+    if (!nuevoProducto.nombre || !nuevoProducto.precio || nuevoProducto.stock === undefined) {
+        return res.status(400).json({ message: 'Faltan datos obligatorios para el producto (nombre, precio, stock).' });
     }
-    if (productos.some(p => p.codigo === nuevoProducto.codigo)) {
-        return res.status(409).json({ // 409 Conflict
-            message: 'error',
-            error: `El producto con código '${nuevoProducto.codigo}' ya existe.`
-        });
-    }
-
-    nuevoProducto.id = generateId(); // Asignar un ID único
-    nuevoProducto.stock = parseInt(nuevoProducto.stock); // Asegurar que stock sea número
-    nuevoProducto.precio = parseFloat(nuevoProducto.precio); // Asegurar que precio sea número
-    if (isNaN(nuevoProducto.stock) || isNaN(nuevoProducto.precio) || nuevoProducto.stock < 0 || nuevoProducto.precio < 0) {
-        return res.status(400).json({
-            message: 'error',
-            error: 'Stock y Precio deben ser números válidos y no negativos.'
-        });
-    }
-
+    nuevoProducto.id = generateId(); // Asigna un ID único
     productos.push(nuevoProducto);
-    res.status(201).json({ // 201 Created
-        message: 'Producto agregado exitosamente',
-        data: nuevoProducto
-    });
+    console.log('Producto agregado:', nuevoProducto);
+    res.status(201).json({ message: 'Producto agregado exitosamente', producto: nuevoProducto });
 });
 
-// 4. PUT /api/productos/:id - Actualizar un producto existente
+// PUT /api/productos/:id - Actualizar un producto existente
 app.put('/api/productos/:id', (req, res) => {
-    const { id } = req.params;
+    const id = req.params.id;
     const datosActualizados = req.body;
-    console.log(`PUT /api/productos/${id} - Solicitud recibida con datos:`, datosActualizados);
-
     const index = productos.findIndex(p => p.id === id);
 
     if (index !== -1) {
-        // Validaciones básicas para los campos actualizados
-        if (datosActualizados.nombre === undefined || datosActualizados.stock === undefined || datosActualizados.precio === undefined) {
-             return res.status(400).json({
-                message: 'error',
-                error: 'Faltan campos obligatorios para actualizar (nombre, stock, precio).'
-            });
-        }
-        datosActualizados.stock = parseInt(datosActualizados.stock);
-        datosActualizados.precio = parseFloat(datosActualizados.precio);
-
-        if (isNaN(datosActualizados.stock) || isNaN(datosActualizados.precio) || datosActualizados.stock < 0 || datosActualizados.precio < 0) {
-            return res.status(400).json({
-                message: 'error',
-                error: 'Stock y Precio deben ser números válidos y no negativos.'
-            });
-        }
-
-        // Actualizar solo los campos que vienen en la petición (excluyendo el id y codigo si no se deben cambiar)
-        productos[index] = {
-            ...productos[index], // Mantener campos existentes como el codigo
-            nombre: datosActualizados.nombre,
-            categoria: datosActualizados.categoria || productos[index].categoria, // Mantener categoría si no se envía
-            stock: datosActualizados.stock,
-            precio: datosActualizados.precio
-        };
-
-        res.status(200).json({
-            message: 'Producto actualizado exitosamente',
-            data: productos[index]
-        });
+        productos[index] = { ...productos[index], ...datosActualizados, id: id }; // Asegura que el ID no cambie
+        console.log('Producto actualizado:', productos[index]);
+        res.json({ message: 'Producto actualizado exitosamente', producto: productos[index] });
     } else {
-        res.status(404).json({
-            message: 'error',
-            error: 'Producto no encontrado'
-        });
+        res.status(404).json({ message: 'Producto no encontrado para actualizar' });
     }
 });
 
-// 5. DELETE /api/productos/:id - Eliminar un producto
+// DELETE /api/productos/:id - Eliminar un producto
 app.delete('/api/productos/:id', (req, res) => {
-    const { id } = req.params;
-    console.log(`DELETE /api/productos/${id} - Solicitud recibida`);
-
-    const initialLength = productos.length;
+    const id = req.params.id;
+    const longitudInicial = productos.length;
     productos = productos.filter(p => p.id !== id);
-
-    if (productos.length < initialLength) {
-        res.status(200).json({
-            message: 'Producto eliminado exitosamente',
-            data: { id: id }
-        });
+    if (productos.length < longitudInicial) {
+        console.log('Producto eliminado, ID:', id);
+        res.status(204).send(); // 204 No Content para eliminación exitosa
     } else {
-        res.status(404).json({
-            message: 'error',
-            error: 'Producto no encontrado'
-        });
+        res.status(404).json({ message: 'Producto no encontrado para eliminar' });
     }
 });
 
-// --- Inicio del Servidor ---
+
+// --- Endpoints de Clientes ---
+
+// GET /api/clientes - Obtener todos los clientes
+app.get('/api/clientes', (req, res) => {
+    console.log('GET /api/clientes - Solicitud de clientes');
+    res.json(clientes);
+});
+
+// POST /api/clientes - Agregar un nuevo cliente
+app.post('/api/clientes', (req, res) => {
+    const nuevoCliente = req.body;
+    if (!nuevoCliente.nombre || !nuevoCliente.email) {
+        return res.status(400).json({ message: 'Faltan datos obligatorios para el cliente (nombre, email).' });
+    }
+    nuevoCliente.id = generateId();
+    clientes.push(nuevoCliente);
+    console.log('Cliente agregado:', nuevoCliente);
+    res.status(201).json({ message: 'Cliente agregado exitosamente', cliente: nuevoCliente });
+});
+
+// --- Endpoints de Ventas ---
+
+// GET /api/ventas - Obtener todas las ventas
+app.get('/api/ventas', (req, res) => {
+    console.log('GET /api/ventas - Solicitud de ventas');
+    res.json(ventas);
+});
+
+// POST /api/ventas - Registrar una nueva venta
+app.post('/api/ventas', (req, res) => {
+    const nuevaVenta = req.body;
+    if (!nuevaVenta.clienteId || !nuevaVenta.productos || !Array.isArray(nuevaVenta.productos) || nuevaVenta.productos.length === 0) {
+        return res.status(400).json({ message: 'Faltan datos obligatorios para la venta (clienteId, productos).' });
+    }
+
+    // Calcular el total de la venta y ajustar el stock de los productos
+    let totalVenta = 0;
+    const productosVendidos = [];
+    const productosNoEncontrados = [];
+
+    nuevaVenta.productos.forEach(itemVenta => {
+        const productoEnStock = productos.find(p => p.id === itemVenta.prodId);
+        if (productoEnStock && productoEnStock.stock >= itemVenta.cantidad) {
+            totalVenta += productoEnStock.precio * itemVenta.cantidad;
+            productoEnStock.stock -= itemVenta.cantidad; // Reduce el stock
+            productosVendidos.push({
+                prodId: itemVenta.prodId,
+                nombre: productoEnStock.nombre,
+                cantidad: itemVenta.cantidad,
+                precioUnitario: productoEnStock.precio
+            });
+        } else {
+            productosNoEncontrados.push(itemVenta.prodId);
+        }
+    });
+
+    if (productosNoEncontrados.length > 0) {
+        return res.status(400).json({ message: `Algunos productos no están disponibles o no hay suficiente stock: ${productosNoEncontrados.join(', ')}` });
+    }
+
+    nuevaVenta.id = generateId();
+    nuevaVenta.fecha = new Date().toISOString().split('T')[0]; // Formato YYYY-MM-DD
+    nuevaVenta.total = totalVenta;
+    nuevaVenta.productos = productosVendidos; // Guarda los detalles de los productos vendidos
+
+    ventas.push(nuevaVenta);
+    console.log('Venta registrada:', nuevaVenta);
+    res.status(201).json({ message: 'Venta registrada exitosamente', venta: nuevaVenta });
+});
+
+
+// 7. Iniciar el servidor
 app.listen(port, () => {
-    console.log(`Servidor backend de Minimarket Chacha corriendo en el puerto ${port}`);
-    console.log(`Accede a la API en: http://localhost:${port}/api/productos (desde Replit)`);
-    console.log(`Asegúrate de actualizar la BASE_URL en tu frontend con la URL pública de Replit.`);
+    console.log(`Backend de Minimarket corriendo en el puerto ${port}`);
+    console.log(`Accede a la API de Productos en: http://localhost:${port}/api/productos`);
+    // Asegúrate de actualizar la BASE_URL en tu frontend con la URL pública de Render.
 });
